@@ -1,0 +1,48 @@
+{
+  "name": "@auki/expo-authentication",
+  "version": "0.1.0",
+  "description": "Authenticate to the auki network and domains",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly",
+    "expo-module": "expo-module",
+    "open:ios": "xed example/ios",
+    "open:android": "open -a \"Android Studio\" example/android"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "@auki/expo-authentication",
+    "AukilabsExpoAuthentication"
+  ],
+  "repository": "https://github.com/aukilabs/experimental-modules",
+  "bugs": {
+    "url": "https://github.com/aukilabs/experimental-modules/issues"
+  },
+  "author": "Aukilabs <jonathan@aukilabs.com> (https://github.com/aukilabs/experimental-modules)",
+  "license": "MIT",
+  "homepage": "https://github.com/aukilabs/experimental-modules",
+  "dependencies": {
+    "@auki/authentication": "file:../javascript",
+    "react-dom": "19.1.0",
+    "react-native-web": "^0.21.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "expo-module-scripts": "^5.0.7",
+    "expo": "^54.0.18",
+    "react-native": "0.81.5",
+    "react-native-web": "~0.21.0"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

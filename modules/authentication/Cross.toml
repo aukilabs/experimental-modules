@@ -1,0 +1,15 @@
+[build]
+# Enable pre-built flag to use platform emulation
+pre-build = []
+
+[target.x86_64-unknown-linux-gnu]
+# Force use of linux/amd64 platform with emulation on ARM64 hosts
+pre-build = ["dpkg --add-architecture amd64"]
+
+[target.aarch64-unknown-linux-gnu]
+# Native build should work fine
+pre-build = []
+
+[target.x86_64-pc-windows-gnu]
+# Force use of linux/amd64 platform with emulation on ARM64 hosts
+pre-build = []
