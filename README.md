@@ -108,8 +108,6 @@ Each module and language binding is independently versioned. Due to the experime
 
 - **Issues:** [GitHub Issues](https://github.com/aukilabs/experimental-modules/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/aukilabs/experimental-modules/discussions)
-- **Website:** [auki.com](https://auki.com)
-- **Documentation:** [docs.auki.com](https://docs.auki.com)
 
 ## License
 
