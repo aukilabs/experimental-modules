@@ -1,0 +1,51 @@
+[package]
+name = "authentication"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+base64 = "0.22"
+
+# WASM dependencies
+wasm-bindgen = { version = "0.2", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+js-sys = { version = "0.3", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+
+# Uniffi dependencies (for native bindings)
+uniffi = { version = "0.30", optional = true }
+thiserror = { version = "1.0", optional = true }
+
+[build-dependencies]
+uniffi = { version = "0.30", features = ["build"] }
+
+[dev-dependencies]
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+dotenv = "0.15"
+ratatui = "0.26"
+crossterm = "0.27"
+wasm-bindgen-test = "0.3"
+
+[features]
+default = []
+wasm = ["wasm-bindgen", "serde-wasm-bindgen", "js-sys", "wasm-bindgen-futures"]
+uniffi-bindings = ["uniffi", "thiserror"]
+
+[[example]]
+name = "test_refresh_expiry"
+path = "examples/test_refresh_expiry.rs"
+
+[profile.release]
+# Optimize for size
+opt-level = "z"     # Optimize for size (smallest binary)
+lto = true          # Enable Link Time Optimization (reduces size by eliminating dead code)
+codegen-units = 1   # Single codegen unit for better optimization (slower compile, smaller binary)
+strip = true        # Strip debug symbols
+panic = "abort"     # Abort on panic instead of unwinding (smaller binary)

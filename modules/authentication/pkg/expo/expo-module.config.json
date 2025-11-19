@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["AukilabsExpoAuthenticationModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.aukilabsexpoauthentication.AukilabsExpoAuthenticationModule"]
+  }
+}

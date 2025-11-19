@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@aukilabs/expo-authentication": ["../src/index"],
+      "@aukilabs/expo-authentication/*": ["../src/*"]
+    }
+  }
+}

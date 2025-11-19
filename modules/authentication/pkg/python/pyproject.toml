@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auki-authentication"
+version = "0.1.0"
+description = "Auki Network authentication library for Python"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "Auki Labs"}]
+keywords = ["auki", "authentication", "posemesh", "dds"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+]
+
+dependencies = [
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "python-dotenv>=1.0.0",
+    "textual>=0.47.0",
+    "aiohttp>=3.9.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/aukilabs/experimental-modules"
+Repository = "https://github.com/aukilabs/experimental-modules"
+
+[tool.setuptools]
+packages = ["auki_authentication"]
+package-dir = {"auki_authentication" = "src"}
+
+[tool.setuptools.package-data]
+auki_authentication = [
+    "bindings/*.py",
+    "bindings/py.typed",
+    "bindings/lib/macosx_10_12_x86_64/*.dylib",
+    "bindings/lib/macosx_11_0_arm64/*.dylib",
+    "bindings/lib/manylinux_2_17_x86_64/*.so",
+    "bindings/lib/manylinux_2_17_aarch64/*.so",
+    "bindings/lib/win_amd64/*.dll"
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["examples"]
