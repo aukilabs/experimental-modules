@@ -25,17 +25,42 @@ Multi-platform authentication library for the Auki Network with support for Rust
 - [Python Package](modules/authentication/pkg/python)
 - [React Native/Expo Package](modules/authentication/pkg/expo)
 
+### 📐 PnP (Perspective-n-Point)
+
+Pure Rust PnP pose estimation. Estimates the 6-DoF pose (position + orientation) of a calibrated camera from known 3D landmarks and their 2D image observations. No OpenCV dependency.
+
+**[View PnP Module Documentation →](modules/pnp/)**
+
+**Key Features:**
+
+- Three solver methods: EPnP, Iterative (Levenberg-Marquardt), and SQPnP
+- `no_std` compatible core library (with `alloc`)
+- WASM Component Model interface via WIT
+- C FFI with auto-generated header for iOS/Android/desktop embedding
+- Numerically validated against OpenCV reference output
+
+**Quick Links:**
+
+- [Rust Core Library](modules/pnp/crates/pnp-core)
+- [C FFI Bindings](modules/pnp/crates/pnp-ffi)
+- [WASM Component](modules/pnp/crates/pnp-wasm)
+
 ## Repository Structure
 
 ```
-authentication/
-├── modules/
-│   └── authentication/          # Authentication module
-│       ├── src/                # Rust core library
-│       ├── pkg/                # Language bindings
-│       ├── examples/           # Examples
-│       ├── README.md           # Module documentation
-│       └── ARCHITECTURE.md     # Technical details
+modules/
+├── authentication/              # Authentication module
+│   ├── src/                    # Rust core library
+│   ├── pkg/                    # Language bindings
+│   ├── examples/               # Examples
+│   ├── README.md               # Module documentation
+│   └── ARCHITECTURE.md         # Technical details
+├── pnp/                        # PnP pose estimation module
+│   ├── crates/
+│   │   ├── pnp-core/          # Pure Rust solver (no_std + alloc)
+│   │   ├── pnp-wasm/          # WASM Component Model guest
+│   │   └── pnp-ffi/           # C FFI layer
+│   └── README.md              # Module documentation
 ├── CONTRIBUTING.md             # Contribution guidelines
 └── README.md                   # This file
 ```
@@ -44,7 +69,8 @@ authentication/
 
 Each module has its own documentation and setup instructions. See the individual module READMEs for details.
 
-For the authentication module, see: **[modules/authentication/README.md](modules/authentication/)**
+- **Authentication:** [modules/authentication/README.md](modules/authentication/)
+- **PnP:** [modules/pnp/README.md](modules/pnp/)
 
 ## Building from Source
 
@@ -95,6 +121,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 **Module Documentation:**
 
 - **[Authentication Module](modules/authentication/)** - Authentication for Auki Network
+- **[PnP Module](modules/pnp/)** - Perspective-n-Point pose estimation
 
 ## Versioning
 
