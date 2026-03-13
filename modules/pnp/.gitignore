@@ -1,0 +1,23 @@
+# Rust build artifacts
+/target/
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.*
+
+# WASM transpile output
+/dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/

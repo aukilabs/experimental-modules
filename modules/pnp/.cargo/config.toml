@@ -1,0 +1,10 @@
+# Android NDK linker configuration is handled by the justfile build-android
+# recipes, which set CC_<target> and CARGO_TARGET_<TARGET>_LINKER env vars
+# pointing to the NDK clang for the appropriate API level.
+#
+# To build manually without `just`, export these env vars yourself:
+#
+#   NDK=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin
+#   export CC_aarch64_linux_android="$NDK/aarch64-linux-android24-clang"
+#   export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$NDK/aarch64-linux-android24-clang"
+#   cargo build --release -p pnp-ffi --target aarch64-linux-android

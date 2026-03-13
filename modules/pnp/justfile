@@ -1,0 +1,391 @@
+# PnP Pose Estimator — common development commands
+
+# Default: list available recipes
+default:
+    @just --list
+
+# ---------------------------------------------------------------------------
+# Setup
+# ---------------------------------------------------------------------------
+
+# Check that all required (and optional) tools are installed
+setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PASS="\033[0;32m✔\033[0m"
+    FAIL="\033[0;31m✘\033[0m"
+    WARN="\033[0;33m⚠\033[0m"
+    errors=0
+    warnings=0
+
+    echo "Checking required tools..."
+    echo ""
+
+    # --- Rust toolchain ---
+    if command -v rustup &>/dev/null; then
+        ver=$(rustc --version 2>/dev/null | awk '{print $2}')
+        echo -e "  $PASS  rustc $ver"
+    else
+        echo -e "  $FAIL  rustc not found"
+        echo "         Install Rust: https://rustup.rs/"
+        errors=$((errors + 1))
+    fi
+
+    if command -v cargo &>/dev/null; then
+        echo -e "  $PASS  cargo"
+    else
+        echo -e "  $FAIL  cargo not found (installed with rustup)"
+        errors=$((errors + 1))
+    fi
+
+    # --- just (you're already here, but check anyway) ---
+    if command -v just &>/dev/null; then
+        echo -e "  $PASS  just"
+    else
+        echo -e "  $FAIL  just not found"
+        echo "         Install: cargo install just"
+        errors=$((errors + 1))
+    fi
+
+    # --- cbindgen (required for FFI header generation) ---
+    if command -v cbindgen &>/dev/null; then
+        ver=$(cbindgen --version 2>/dev/null | awk '{print $2}')
+        echo -e "  $PASS  cbindgen $ver"
+    else
+        echo -e "  $FAIL  cbindgen not found (required for C FFI builds)"
+        echo "         Install: cargo install cbindgen"
+        errors=$((errors + 1))
+    fi
+
+    echo ""
+    echo "Checking Rust targets..."
+    echo ""
+
+    # --- Native (always available) ---
+    host=$(rustc -vV | grep host | awk '{print $2}')
+    echo -e "  $PASS  $host (host)"
+
+    # --- iOS ---
+    for target in aarch64-apple-ios aarch64-apple-ios-sim; do
+        if rustup target list --installed | grep -q "^${target}$"; then
+            echo -e "  $PASS  $target"
+        else
+            echo -e "  $WARN  $target not installed (needed for iOS builds)"
+            echo "         Install: rustup target add $target"
+            warnings=$((warnings + 1))
+        fi
+    done
+
+    # --- Android ---
+    for target in aarch64-linux-android x86_64-linux-android; do
+        if rustup target list --installed | grep -q "^${target}$"; then
+            echo -e "  $PASS  $target"
+        else
+            echo -e "  $WARN  $target not installed (needed for Android builds)"
+            echo "         Install: rustup target add $target"
+            warnings=$((warnings + 1))
+        fi
+    done
+
+    # --- WASM ---
+    for target in wasm32-wasip2; do
+        if rustup target list --installed | grep -q "^${target}$"; then
+            echo -e "  $PASS  $target"
+        else
+            echo -e "  $WARN  $target not installed (needed for WASM builds)"
+            echo "         Install: rustup target add $target"
+            warnings=$((warnings + 1))
+        fi
+    done
+
+    echo ""
+    echo "Checking Android NDK..."
+    echo ""
+
+    ndk_found=false
+    if [ -n "${ANDROID_NDK_HOME:-}" ] && [ -d "$ANDROID_NDK_HOME" ]; then
+        ndk_ver=$(basename "$ANDROID_NDK_HOME")
+        echo -e "  $PASS  Android NDK $ndk_ver (ANDROID_NDK_HOME)"
+        ndk_found=true
+    elif [ -d "$HOME/Library/Android/sdk/ndk" ]; then
+        ndk_ver=$(ls "$HOME/Library/Android/sdk/ndk/" 2>/dev/null | sort -V | tail -1)
+        if [ -n "$ndk_ver" ]; then
+            echo -e "  $PASS  Android NDK $ndk_ver (~/Library/Android/sdk/ndk/)"
+            ndk_found=true
+        fi
+    fi
+
+    if [ "$ndk_found" = false ]; then
+        echo -e "  $WARN  Android NDK not found (needed for Android builds)"
+        echo "         Install via Android Studio > SDK Manager > SDK Tools > NDK"
+        echo "         Or set ANDROID_NDK_HOME to point to your NDK installation"
+        warnings=$((warnings + 1))
+    fi
+
+    echo ""
+    echo "Checking optional tools..."
+    echo ""
+
+    # --- cargo-component (WASM) ---
+    if command -v cargo-component &>/dev/null; then
+        ver=$(cargo component --version 2>/dev/null | awk '{print $2}')
+        echo -e "  $PASS  cargo-component $ver"
+    else
+        echo -e "  $WARN  cargo-component not found (needed for WASM builds)"
+        echo "         Install: cargo install cargo-component"
+        warnings=$((warnings + 1))
+    fi
+
+    # --- jco (WASM transpile to JS) ---
+    if command -v jco &>/dev/null; then
+        ver=$(jco --version 2>/dev/null)
+        echo -e "  $PASS  jco $ver"
+    else
+        echo -e "  $WARN  jco not found (needed for WASM-to-JS transpile)"
+        echo "         Install: npm install -g @bytecodealliance/jco"
+        warnings=$((warnings + 1))
+    fi
+
+    # --- Python + opencv (reference data) ---
+    if command -v python3 &>/dev/null; then
+        pyver=$(python3 --version 2>/dev/null | awk '{print $2}')
+        if python3 -c "import cv2" 2>/dev/null; then
+            echo -e "  $PASS  python3 $pyver + opencv-python"
+        else
+            echo -e "  $WARN  python3 $pyver found, but opencv-python not installed"
+            echo "         Install: pip install opencv-python numpy"
+            warnings=$((warnings + 1))
+        fi
+    else
+        echo -e "  $WARN  python3 not found (needed to regenerate reference test data)"
+        warnings=$((warnings + 1))
+    fi
+
+    # --- Summary ---
+    echo ""
+    if [ $errors -gt 0 ]; then
+        echo -e "$FAIL $errors required tool(s) missing. Fix the errors above before building."
+        exit 1
+    elif [ $warnings -gt 0 ]; then
+        echo -e "$PASS All required tools present. $warnings optional tool(s) missing (see above)."
+        echo "  Core builds and tests will work. Install optional tools for cross-compilation targets."
+    else
+        echo -e "$PASS Everything installed. You're ready to go!"
+    fi
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+# Run all tests across the workspace
+test:
+    cargo test --workspace
+
+# Run only pnp-core unit tests
+test-core:
+    cargo test -p pnp-core --lib
+
+# Run integration tests (requires reference data)
+test-integration:
+    cargo test -p pnp-core --test integration
+
+# Run FFI tests
+test-ffi:
+    cargo test -p pnp-ffi
+
+# ---------------------------------------------------------------------------
+# Builds
+# ---------------------------------------------------------------------------
+
+# Build all crates in debug mode
+build:
+    cargo build --workspace
+
+# Build all crates in release mode
+build-release:
+    cargo build --workspace --release
+
+# Build the WASM component (debug)
+build-wasm:
+    cargo component build -p pnp-wasm --target wasm32-wasip2
+
+# Build the WASM component (release)
+build-wasm-release:
+    cargo component build --release -p pnp-wasm --target wasm32-wasip2
+
+# Build the C FFI library (release, macOS)
+build-ffi:
+    cargo build --release -p pnp-ffi
+
+# Build the C FFI library for iOS (aarch64)
+build-ios:
+    cargo build --release -p pnp-ffi --target aarch64-apple-ios
+
+# Build the C FFI library for iOS Simulator (aarch64)
+build-ios-sim:
+    cargo build --release -p pnp-ffi --target aarch64-apple-ios-sim
+
+# Android NDK root (auto-detected from ANDROID_NDK_HOME or latest installed NDK)
+ndk_home := env("ANDROID_NDK_HOME", "")
+android_api := "24"
+
+# Resolve the NDK toolchain bin directory
+_ndk_bin := if ndk_home != "" {
+    ndk_home / "toolchains/llvm/prebuilt/darwin-x86_64/bin"
+} else {
+    `ls -d ~/Library/Android/sdk/ndk/*/toolchains/llvm/prebuilt/darwin-x86_64/bin 2>/dev/null | sort -V | tail -1 || echo ""`
+}
+
+# Build the C FFI library for Android aarch64 (arm64-v8a)
+build-android-arm64:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    NDK_BIN="{{ _ndk_bin }}"
+    if [ -z "$NDK_BIN" ] || [ ! -d "$NDK_BIN" ]; then
+        echo "Error: Android NDK not found." >&2
+        echo "  Install via Android Studio > SDK Manager > SDK Tools > NDK (Side by side)" >&2
+        echo "  Or set ANDROID_NDK_HOME to your NDK root directory." >&2
+        echo "  Run 'just setup' to check your environment." >&2
+        exit 1
+    fi
+    export CC_aarch64_linux_android="$NDK_BIN/aarch64-linux-android{{ android_api }}-clang"
+    export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$NDK_BIN/aarch64-linux-android{{ android_api }}-clang"
+    cargo build --release -p pnp-ffi --target aarch64-linux-android
+
+# Build the C FFI library for Android x86_64 (emulator)
+build-android-x86_64:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    NDK_BIN="{{ _ndk_bin }}"
+    if [ -z "$NDK_BIN" ] || [ ! -d "$NDK_BIN" ]; then
+        echo "Error: Android NDK not found." >&2
+        echo "  Install via Android Studio > SDK Manager > SDK Tools > NDK (Side by side)" >&2
+        echo "  Or set ANDROID_NDK_HOME to your NDK root directory." >&2
+        echo "  Run 'just setup' to check your environment." >&2
+        exit 1
+    fi
+    export CC_x86_64_linux_android="$NDK_BIN/x86_64-linux-android{{ android_api }}-clang"
+    export CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="$NDK_BIN/x86_64-linux-android{{ android_api }}-clang"
+    cargo build --release -p pnp-ffi --target x86_64-linux-android
+
+# Build the C FFI library for all Android targets (arm64 + x86_64)
+build-android: build-android-arm64 build-android-x86_64
+
+# ---------------------------------------------------------------------------
+# Packaging
+# ---------------------------------------------------------------------------
+
+# Output directory for packaged artifacts
+dist := "dist"
+
+# Package iOS XCFramework (device + simulator static lib + header)
+package-ios: build-ios build-ios-sim generate-header
+    #!/usr/bin/env bash
+    set -euo pipefail
+    OUT="{{ dist }}/ios"
+    rm -rf "$OUT"
+
+    # Prepare per-platform directories with headers (xcodebuild requires this)
+    for platform in device simulator; do
+        mkdir -p "$OUT/$platform/Headers"
+        cp crates/pnp-ffi/include/pnp.h "$OUT/$platform/Headers/"
+    done
+    cp target/aarch64-apple-ios/release/libpnp_ffi.a     "$OUT/device/libpnp_ffi.a"
+    cp target/aarch64-apple-ios-sim/release/libpnp_ffi.a  "$OUT/simulator/libpnp_ffi.a"
+
+    # Create module map so Swift can import via `import PnP`
+    for platform in device simulator; do
+        cat > "$OUT/$platform/Headers/module.modulemap" <<'MAP'
+    module PnP {
+        header "pnp.h"
+        export *
+    }
+    MAP
+    done
+
+    # Build XCFramework
+    xcodebuild -create-xcframework \
+        -library "$OUT/device/libpnp_ffi.a"    -headers "$OUT/device/Headers" \
+        -library "$OUT/simulator/libpnp_ffi.a" -headers "$OUT/simulator/Headers" \
+        -output  "$OUT/PnP.xcframework"
+
+    # Clean up intermediate files
+    rm -rf "$OUT/device" "$OUT/simulator"
+
+    echo ""
+    echo "=== iOS XCFramework ==="
+    echo "  $OUT/PnP.xcframework"
+    echo ""
+    echo "Usage: drag PnP.xcframework into your Xcode project,"
+    echo "  then import PnP in Swift or #include <pnp.h> in ObjC/C."
+
+# Package Android .so files in jniLibs layout + header
+package-android: build-android generate-header
+    #!/usr/bin/env bash
+    set -euo pipefail
+    OUT="{{ dist }}/android"
+    rm -rf "$OUT"
+
+    # jniLibs directory structure expected by Android Gradle
+    mkdir -p "$OUT/jniLibs/arm64-v8a"
+    mkdir -p "$OUT/jniLibs/x86_64"
+    mkdir -p "$OUT/include"
+
+    cp target/aarch64-linux-android/release/libpnp_ffi.so "$OUT/jniLibs/arm64-v8a/libpnp_ffi.so"
+    cp target/x86_64-linux-android/release/libpnp_ffi.so  "$OUT/jniLibs/x86_64/libpnp_ffi.so"
+    cp crates/pnp-ffi/include/pnp.h                        "$OUT/include/pnp.h"
+
+    echo ""
+    echo "=== Android artifacts ==="
+    echo "  $OUT/jniLibs/arm64-v8a/libpnp_ffi.so"
+    echo "  $OUT/jniLibs/x86_64/libpnp_ffi.so"
+    echo "  $OUT/include/pnp.h"
+    echo ""
+    echo "Usage: copy jniLibs/ into app/src/main/ and use JNI or"
+    echo "  include pnp.h in your native CMakeLists.txt."
+
+# Package both iOS and Android
+package-all: package-ios package-android
+
+# ---------------------------------------------------------------------------
+# Checks
+# ---------------------------------------------------------------------------
+
+# Verify no_std compilation
+check-nostd:
+    cargo check -p pnp-core --no-default-features
+
+# Run all checks (test + no_std + clippy)
+check-all: test check-nostd
+    cargo clippy --workspace -- -D warnings
+
+# ---------------------------------------------------------------------------
+# Code generation
+# ---------------------------------------------------------------------------
+
+# Transpile WASM component to browser-ready JS via jco
+transpile: build-wasm-release
+    jco transpile target/wasm32-wasip1/release/pnp_wasm.wasm -o dist/wasm
+
+# Regenerate the C header (requires cbindgen CLI)
+generate-header:
+    cd crates/pnp-ffi && cbindgen --crate pnp-ffi -c cbindgen.toml -o include/pnp.h
+
+# Generate reference test data (requires Python + opencv-python)
+generate-reference:
+    python3 tests/generate_reference.py
+
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
+
+# Print artifact sizes
+sizes: build-release build-wasm-release
+    @echo "=== Release artifact sizes ==="
+    @ls -lh target/release/libpnp_ffi.a
+    @ls -lh target/release/libpnp_ffi.dylib
+    @ls -lh target/wasm32-wasip1/release/pnp_wasm.wasm
+
+# Clean all build artifacts
+clean:
+    cargo clean
