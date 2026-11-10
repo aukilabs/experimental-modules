@@ -94,7 +94,7 @@ javascript:
 	@echo ""
 	@echo "[4/6] Installing npm dependencies..."
 	@if [ ! -d pkg/javascript/node_modules ]; then \
-		cd pkg/javascript && npm install; \
+		cd pkg/javascript && npm ci; \
 	else \
 		echo "✓ Dependencies already installed"; \
 	fi
@@ -305,7 +305,7 @@ expo:
 	@echo ""
 	@echo "Next steps:"
 	@echo "  cd pkg/expo/example"
-	@echo "  npm install"
+	@echo "  npm ci"
 	@echo "  npm run ios       # Run on iOS simulator"
 	@echo ""
 
